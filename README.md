@@ -2,6 +2,8 @@
 
 This repo demos a small webservice that visualizes POST requests made to its API.
 
+![image](server.jpg)
+
 
 
 ## Development
