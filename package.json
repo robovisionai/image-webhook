@@ -1,0 +1,16 @@
+{
+  "name": "image-webhook",
+  "version": "0.1.4",
+  "description": "A simple webhook tester that also shows an image",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Sam Decrock",
+  "license": "",
+  "dependencies": {
+    "express.js": "^1.0.0",
+    "multer": "^1.4.5-lts.1",
+    "socket.io": "^4.8.1"
+  }
+}

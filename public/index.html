@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Webhook Tester</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        h1 {
+            background-color: #6200ea;
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        #room {
+            margin: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+        #url {
+            margin-top: 10px;
+            font-size: 16px;
+            color: #555;
+        }
+        #stats {
+            margin-top: 10px;
+            font-size: 16px;
+            color: #333;
+        }
+        #images {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .image-container {
+            text-align: center;
+        }
+        .image-container img {
+            max-height: 300px;
+            width: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .image-container .filename {
+            font-size: 14px;
+            color: #555;
+            margin-top: 5px;
+        }
+        #predictions {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            max-width: 600px;
+            margin: 20px auto;
+            font-size: 14px;
+            color: #333;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <h1>Webhook Tester</h1>
+    <div id="room"></div>
+    <div id="url"></div>
+    <div id="stats">
+        <div>Total Incoming API Calls: <span id="totalCalls">0</span></div>
+        <div>API Calls Per Second: <span id="callsPerSecond">0</span></div>
+    </div>
+    <div id="images"></div>
+    <div id="predictions">Predictions will appear here</div>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const imagesDiv = document.getElementById('images');
+        const predictionsDiv = document.getElementById('predictions');
+        const roomDiv = document.getElementById('room');
+        const urlDiv = document.getElementById('url');
+        const totalCallsSpan = document.getElementById('totalCalls');
+        const callsPerSecondSpan = document.getElementById('callsPerSecond');
+
+        const room = window.location.pathname.substring(1) || 'default';
+        const webhookUrl = `${window.location.origin}/${room}`;
+        roomDiv.textContent = `Room: ${room}`;
+        urlDiv.textContent = `Webhook URL: ${webhookUrl}`;
+
+        let totalApiCalls = 0;
+        let apiCallsInLastSecond = 0;
+        let lastUpdateTime = Date.now();
+
+        socket.emit('join', room);
+
+        socket.on('update', (data) => {
+            // Update API call metrics
+            totalApiCalls++;
+            apiCallsInLastSecond++;
+            totalCallsSpan.textContent = totalApiCalls;
+
+            const now = Date.now();
+            if (now - lastUpdateTime >= 1000) {
+                callsPerSecondSpan.textContent = apiCallsInLastSecond;
+                apiCallsInLastSecond = 0;
+                lastUpdateTime = now;
+            }
+
+            // Clear previous images
+            imagesDiv.innerHTML = '';
+            if (data.images && data.images.length > 0) {
+                data.images.forEach((image, index) => {
+                    const container = document.createElement('div');
+                    container.classList.add('image-container');
+
+                    const filename = data.filenames && data.filenames[index] ? data.filenames[index] : 'Unknown';
+                    const filenameDiv = document.createElement('div');
+                    filenameDiv.classList.add('filename');
+                    filenameDiv.textContent = filename;
+
+                    const img = document.createElement('img');
+                    img.src = image;
+
+                    container.appendChild(filenameDiv);
+                    container.appendChild(img);
+                    imagesDiv.appendChild(container);
+                });
+            }
+
+            // Display nicely formatted predictions
+            predictionsDiv.textContent = data.predictions
+                ? JSON.stringify(data.predictions, null, 2)
+                : 'Predictions will appear here';
+        });
+    </script>
+</body>
+</html>
